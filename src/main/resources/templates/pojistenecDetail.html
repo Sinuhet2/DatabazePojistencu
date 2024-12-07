@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Pojistenec Detail</title>
+    <!-- Načítání Bootstrap CSS pro responzivní design -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+<!-- Načítání fragmentu pro navigaci -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<!-- Sekce pro detail pojištěnce -->
+<article class="container mt-3 mb-5 flex-grow-1" th:if="${pojistenec != null}">
+
+    <!-- Zobrazení úspěšné zprávy, pokud existuje -->
+    <div th:if="${successMessage != null}" class="alert alert-success">
+        <span th:text="${successMessage}"></span>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Sloupec pro profilový obrázek -->
+            <div class="col-12 col-md-3 mb-3 my-3">
+                <div class="profile-picture">
+                    <!-- Zobrazení profilového obrázku pojištěnce, nebo výchozí obrázek, pokud není k dispozici -->
+                    <img th:src="${pojistenec.lokaceObrazku != null ? pojistenec.lokaceObrazku : '/images/avatar.png'}" alt="Obrázek pojištěnce" style="width: 200px;">
+                </div>
+            </div>
+
+            <!-- Sloupec pro jméno a adresu -->
+            <div class="col-12 col-md-8 mb-3">
+                <!-- Sekce pro jméno a příjmení pojištěnce -->
+                <div class="name-and-surname">
+                    <h2 class="my-3" th:text="${pojistenec.jmeno != null ? pojistenec.jmeno + ' ' + pojistenec.prijmenni : 'Jméno není dostupné'}">Pojistenec Name</h2>
+                </div>
+
+                <!-- Sekce pro adresu (Ulice, Město, PSČ a Telefon) -->
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <!-- Adresa a číslo popisné -->
+                        <p class="mb-2"><strong>Ulice a číslo popisné: </strong><span th:text="${pojistenec.ulice != null ? pojistenec.ulice : 'N/A'}">N/A</span></p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <!-- Telefonní číslo -->
+                        <p class="mb-2"><strong>Telefonní číslo: </strong><span th:text="${pojistenec.telefonniCislo != null ? pojistenec.telefonniCislo : 'N/A'}">N/A</span></p>
+                    </div>
+                </div>
+
+                <!-- Sekce pro město a PSČ -->
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <!-- Město -->
+                        <p class="mb-2"><strong>Město: </strong><span th:text="${pojistenec.mesto != null ? pojistenec.mesto : 'N/A'}">N/A</span></p>
+                        <!-- PSČ -->
+                        <p class="mb-2"><strong>PSČ: </strong><span th:text="${pojistenec.psc != null ? pojistenec.psc : 'N/A'}">N/A</span></p>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <!-- Email -->
+                        <p class="mb-2"><strong>Email: </strong><span th:text="${pojistenec.email != null ? pojistenec.email : 'N/A'}">N/A</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9 my-5">
+            <!-- Seznam pojištění, pokud existuje -->
+            <div th:if="${pojisteni != null and pojisteni.size() > 0}" class="container mt-5" id="obsah">
+                <div id="panelSeznamuPojisteni" class="panel">
+                    <h3>Seznam pojištění</h3>
+                    <table class="table border table-striped my-3">
+                        <thead>
+                        <tr>
+                            <th>Pojištění</th>
+                            <th>Částka (Kč)</th>
+                            <th>Akce</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- Iterace přes seznam pojištění a zobrazení jednotlivých položek -->
+                        <tr th:each="pojisteniItem : ${pojisteni}">
+                            <td>
+                                <!-- Odkaz na detail pojištění -->
+                                <a th:href="@{/pojisteni/pojisteniDetail/{idPojisteni}(idPojisteni=${pojisteniItem.idPojisteni})}">
+                                    Pojištění <span th:text="${pojisteniItem.typPojisteni}"></span>
+                                </a>
+                            </td>
+                            <td th:text="${pojisteniItem.castka}"></td>
+                            <td>
+                                <div class="d-flex">
+                                    <!-- Tlačítko pro úpravu pojištění -->
+                                    <button type="button" id="tlacitkoUpravitPojisteni" class="btn btn-sm btn-warning mr-3">
+                                        <a href="#" th:href="@{/upravitPojisteni/{idPojisteni}(idPojisteni=${pojisteniItem.idPojisteni})}" class="text-white">Upravit</a>
+                                    </button>
+                                    <!-- Formulář pro smazání pojištění -->
+                                    <form th:action="@{/delete/{idPojisteni}(idPojisteni=${pojisteniItem.idPojisteni})}"
+                                          method="post"
+                                          th:id="'formularProSmazani' + ${pojisteniItem.idPojisteni}">
+                                        <button type="button"
+                                                class="btn btn-danger btn-sm"
+                                                th:id="'tlacitkoSmazat' + ${pojisteniItem.idPojisteni}"
+                                                th:onclick="|potvrdSmazani(event, ${pojisteniItem.idPojisteni})|">
+                                            Odstranit
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pokud není žádné pojištění, zobrazí se zpráva -->
+            <div th:if="${pojisteni == null or pojisteni.size() == 0}">
+                <p>Tento pojištěnec zatím nemá žádné pojištění.</p>
+            </div>
+        </div>
+    </div>
+
+<!-- Akční tlačítka pro přidání pojištění, úpravu pojištěnce a jeho odstranění -->
+<div class="container mt-3 d-flex">
+    <button id="tlacitkoPridatPojisteni" class="btn btn-primary mr-3">
+        <a href="#" th:href="@{/pojistenec/{id}/pridatPojisteni(id=${pojistenec.id})}" class="text-white">Přidat pojištění</a>
+    </button>
+    <button id="tlacitkoUpravit" class="btn btn-warning mr-3">
+        <a href="#" th:href="@{/pojistenec/upravitPojistence/{id}(id=${pojistenec.id})}" class="text-white">Upravit údaje</a>
+    </button>
+    <form action="/pojistenec/delete/{id}" method="post" th:action="@{/pojistenec/delete/{id}(id=${pojistenec.id})}" id="formularProSmazani">
+        <button type="button" class="btn btn-danger" onclick="potvrdSmazaniPojistence(event)">Odstranit pojištěnce</button>
+    </form>
+</div>
+
+</article>
+
+
+<!-- Pokud pojištěnec není k dispozici, zobrazí se zpráva -->
+<div th:if="${pojistenec == null}">
+    <p>Pojištěnec není k dispozici.</p>
+</div>
+
+<!-- Načítání fragmentu pro zápatí -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<!-- Skript pro potvrzení smazání pojištěnce -->
+<script>
+    function potvrdSmazaniPojistence(event) {
+        event.preventDefault();
+        var potvrzeni = confirm("Opravdu chcete smazat tohoto pojištěnce?");
+        if (potvrzeni) {
+            document.getElementById("formularProSmazani").submit();
+        }
+    }
+
+    function potvrdSmazani(event, idPojisteni) {
+        event.preventDefault();  // Zabraňuje odeslání formuláře
+
+        // Zobrazení potvrzovacího dialogu
+        var potvrzeni = confirm("Opravdu chcete smazat toto pojištění?");
+
+        // Pokud uživatel potvrdí, odešle formulář pro smazání pojištění
+        if (potvrzeni) {
+            var form = document.getElementById('formularProSmazani' + idPojisteni);
+            form.submit();  // Odeslání formuláře
+        } else {
+            console.log("Smazání zrušeno pro ID:", idPojisteni);  // Logování zrušení
+        }
+    }
+</script>
+
+<!-- Načítání JavaScript knihoven -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

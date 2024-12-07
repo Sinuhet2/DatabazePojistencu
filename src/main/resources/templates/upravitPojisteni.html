@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Upravit pojištění</title>
+    <!-- Načítání Bootstrap CSS pro responzivní design -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- Načítání fragmentu pro navigaci -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<!-- Sekce pro úpravu pojištění (zobrazí se pouze, pokud existuje pojištění) -->
+<article th:if="${pojisteni != null}" id="formularUpravyPojisteni" class="mt-4 mb-3 offset-1 flex-grow-1">
+    <h3>Upravit Pojištění</h3>
+    <!-- Formulář pro úpravu pojištění -->
+    <form method="post" th:action="@{/update/{idPojisteni}(idPojisteni=${pojisteni.idPojisteni})}" enctype="multipart/form-data">
+
+        <!-- Řádek 1: Výběr typu pojištění -->
+        <div class="form-row">
+            <div class="form-group col-md-8">
+                <label for="typPojisteni">Typ pojištění</label>
+                <select class="form-control" id="typPojisteni" name="typPojisteni">
+                    <!-- Možnosti pro typy pojištění (osobní, majetkové, zájmů) -->
+                    <option value="osob" th:selected="${pojisteni.typPojisteni == 'osob'}">Pojištění osob</option>
+                    <option value="majetku" th:selected="${pojisteni.typPojisteni == 'majetku'}">Pojištění majetku</option>
+                    <option value="zájmu" th:selected="${pojisteni.typPojisteni == 'zájmu'}">Pojištění zájmů</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Řádek 2: Částka pojištění a Předmět pojištění -->
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="castka">Částka (Kč)</label>
+                <input type="number" class="form-control" id="castka" name="castka" required min="1" step="0.01" th:value="${pojisteni.castka}">
+                <!-- Chybová zpráva pro částku -->
+                <small id="castkaError" class="form-text text-danger" style="display:none;">Částka musí být minimálně 1 Kč.</small>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="predmetPojisteni">Předmět pojištění</label>
+                <input type="text" class="form-control" id="predmetPojisteni" name="predmetPojisteni" th:value="${pojisteni.predmetPojisteni}">
+            </div>
+        </div>
+
+        <!-- Řádek 3: Datum platnosti pojištění (od-do) -->
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="platnostOd">Platnost od</label>
+                <input type="date" class="form-control" id="platnostOd" name="datumOd"
+                       th:value="${pojisteni != null && pojisteni.datumOd != null ? pojisteni.datumOd : ''}">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="platnostDo">Platnost do</label>
+                <input type="date" class="form-control" id="platnostDo" name="datumDo"
+                       th:value="${pojisteni != null && pojisteni.datumDo != null ? pojisteni.datumDo : ''}">
+            </div>
+        </div>
+
+        <!-- Tlačítko pro odeslání formuláře -->
+        <button type="submit" class="btn btn-primary btn-lg offset-md-5 my-4">Uložit změny</button>
+    </form>
+</article>
+
+<!-- Načítání fragmentu pro zápatí -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<script>
+    // Funkce pro validaci formuláře před odesláním
+    document.addEventListener('DOMContentLoaded', function () {
+        var formular = document.querySelector('form'); // Vyhledání formuláře
+        var castkaVstup = document.getElementById('castka'); // Vyhledání vstupu pro částku
+
+        // Přidání posluchače na odeslání formuláře
+        formular.addEventListener('submit', function (event) {
+            var jeValidni = true; // Předpokládáme, že formulář bude validní
+
+            // Validace: částka musí být větší než nebo rovna 1
+            if (parseFloat(castkaVstup.value) < 1) {
+                document.getElementById('castkaError').style.display = 'block'; // Zobrazení chybové zprávy
+                jeValidni = false; // Nastavení nevalidního stavu formuláře
+            } else {
+                document.getElementById('castkaError').style.display = 'none'; // Skrytí chybové zprávy
+            }
+
+            // Pokud formulář není validní, zamezí se jeho odeslání
+            if (!jeValidni) {
+                event.preventDefault(); // Zastavení odeslání formuláře
+            }
+        });
+    });
+</script>
+
+<!-- Načítání jQuery a Bootstrap JS pro funkčnost formulářů a dalších komponent -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

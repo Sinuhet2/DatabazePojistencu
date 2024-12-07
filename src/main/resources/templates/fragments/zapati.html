@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <title>Zápatí</title>
+  <!-- Načítání Bootstrap stylů pro vzhled a rozvržení -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+<!-- Fragment pro zápatí stránky, který může být znovu použit na jiných stránkách -->
+<footer th:fragment="zapati">
+  <!-- Zápatí s tmavým pozadím, světlým textem a centrálně zarovnaným obsahem -->
+  <div class="bg-dark text-center text-light py-3">
+    <!-- Text s odkazem na stránku "O mně" -->
+    <p>Vytvořil <a href="/oMne" style="color: rgba(255, 255, 255, 0.5)">Vojtěch Černý</a></p>
+  </div>
+</footer>
+
+<!-- Načítání jQuery a Bootstrap JavaScriptu pro zajištění správného fungování interaktivních prvků -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

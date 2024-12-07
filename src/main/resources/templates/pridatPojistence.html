@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Přidat pojištěnce</title>
+    <!-- Načítání Bootstrap CSS pro responzivní design -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- Načítání fragmentu pro navigaci -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<!-- Hlavní obsah pro formulář pro přidání pojištěnce -->
+<article class="container mt-5 flex-grow-1" id="obsah">
+    <!-- Formulář pro přidání pojištěnce -->
+    <div th:action="@{/pridatPojistence}" th:object="${pojistenec}" id="createPojistenecPanel" class="panel">
+        <h2>Přidat pojištěnce</h2>
+        <figcaption><small>*) položky označené hvězdičkou jsou povinné!</small></figcaption>
+        <!-- Začátek formuláře -->
+        <form id="pojistenecForm" class="mb-5 my-3" method="POST" enctype="multipart/form-data">
+            <!-- CSRF token pro ochranu proti CSRF útokům -->
+            <input type="hidden" name="_csrf" value="${_csrf.token}">
+
+            <!-- Řádek 1: Jméno a Příjmení -->
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="jmeno">Jméno*</label>
+                    <input type="text" class="form-control" id="jmeno" name="jmeno" required>
+                    <small id="jmenoError" class="form-text text-danger" style="display: none;">Jméno je povinné a musí být správně napsáno.</small>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="prijmenni">Příjmení*</label>
+                    <input type="text" class="form-control" id="prijmenni" name="prijmenni" required>
+                    <small id="prijmenniError" class="form-text text-danger" style="display: none;">Příjmení je povinné a musí být správně napsáno.</small>
+                </div>
+            </div>
+
+            <!-- Řádek 2: Telefonní číslo a Email -->
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="telefonniCislo">Telefonní číslo (bez mezer)*</label>
+                    <input type="text" class="form-control" id="telefonniCislo" name="telefonniCislo" required>
+                    <small id="telefonniCisloError" class="form-text text-danger" style="display: none;">Telefonní číslo není validní.</small>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="email">Email*</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                    <small id="emailError" class="form-text text-danger" style="display: none;">Email není validní.</small>
+                </div>
+            </div>
+
+            <!-- Řádek 3: Pohlaví -->
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="gender">Pohlaví*</label>
+                    <select class="form-control" id="gender" name="gender" required>
+                        <option value="muž">Muž</option>
+                        <option value="žena">Žena</option>
+                        <option value="jiné">Jiné</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Řádek 4: Ulice a Město -->
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="ulice">Ulice a číslo popisné*</label>
+                    <input type="text" class="form-control" id="ulice" name="ulice" required>
+                    <small id="uliceError" class="form-text text-danger" style="display: none;">Ulice musí být správně napsána.</small>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="mesto">Město*</label>
+                    <input type="text" class="form-control" id="mesto" name="mesto" required>
+                    <small id="mestoError" class="form-text text-danger" style="display: none;">Město musí být správně napsáno.</small>
+                </div>
+            </div>
+
+            <!-- Řádek 5: PSČ -->
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="psc">PSČ (bez mezer)*</label>
+                    <input type="text" class="form-control" id="psc" name="psc" required>
+                    <small id="pscError" class="form-text text-danger" style="display: none;">PSČ není validní.</small>
+                </div>
+            </div>
+
+            <!-- Tlačítko pro odeslání formuláře -->
+            <button type="submit" class="btn btn-lg btn-primary offset-md-5">Přidat pojištěnce</button>
+        </form>
+    </div>
+</article>
+
+<!-- Načítání fragmentu pro zápatí -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<!-- Skript pro validaci a formátování formuláře -->
+<script>
+    // Funkce pro zajištění, že první písmeno bude velké a ostatní malé
+    function zvetsiAZmensiPismena(inputElement) {
+        let value = inputElement.value.trim();
+        if (value) {
+            // Rozdělení textu na jednotlivá slova
+            let words = value.split(' ');
+            let newValue = words.map(word => {
+                // U každého slova první písmeno velké, ostatní malé
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            }).join(' ');
+
+            // Nastavení nového textu do inputu
+            inputElement.value = newValue;
+        }
+    }
+
+    // Funkce pro formátování jména a příjmení, kde první slovo je plně kapitálkové, ostatní malá
+    function zvetsiAZmensiANechStejnaPismena(inputElement) {
+        let valueB = inputElement.value.trim();
+        if (valueB) {
+            let wordsB = valueB.split(' ');
+
+            // Aplikace pravidel pro velká a malá písmena
+            let newValueB = wordsB.map((word, index) => {
+                if (index === 0) {
+                    // Pro první slovo první písmeno velké a zbytek malé
+                    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                } else {
+                    // Pro ostatní slova první písmeno zůstává stejné, zbytek malé
+                    return word.charAt(0) + word.slice(1).toLowerCase();
+                }
+            }).join(' ');
+
+            // Nastavení nového textu do inputu
+            inputElement.value = newValueB;
+        }
+    }
+
+    // Funkce pro validaci českého mobilního čísla
+    function validujMobilniCislo(phoneNumber) {
+        // RegExp pro validaci českého mobilního čísla (povolené formáty)
+        const phoneRegex = /^(?:\+420|420)?\d{9}$/;
+        return phoneRegex.test(phoneNumber);
+    }
+
+    // Funkce pro validaci PSČ (Česká poštovní kód)
+    function validujPostovniKod(postalCode) {
+        // RegExp pro validaci českého PSČ (5 číslic)
+        const postalCodeRegex = /^[0-9]{5}$/;
+        return postalCodeRegex.test(postalCode);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('pojistenecForm');
+
+        form.addEventListener('submit', function(event) {
+            let jeValidni = true;
+
+            // Získání hodnot z formuláře
+            var jmenoVstup = document.getElementById('jmeno');
+            var prijmenniVstup = document.getElementById('prijmenni');
+            var uliceVstup = document.getElementById('ulice');
+            var mestoVstup = document.getElementById('mesto');
+            var telefonniCisloVstup = document.getElementById('telefonniCislo');
+            var pscVstup = document.getElementById('psc');
+
+            // Validace jména a příjmení
+            if (!jmenoVstup.value) {
+                document.getElementById('jmenoError').style.display = 'block';
+                jeValidni = false;
+            } else {
+                document.getElementById('jmenoError').style.display = 'none';
+            }
+
+            if (!prijmenniVstup.value) {
+                document.getElementById('prijmenniError').style.display = 'block';
+                jeValidni = false;
+            } else {
+                document.getElementById('prijmenniError').style.display = 'none';
+            }
+
+            // Validace adresy
+            if (!uliceVstup.value) {
+                document.getElementById('uliceError').style.display = 'block';
+                jeValidni = false;
+            } else {
+                document.getElementById('uliceError').style.display = 'none';
+            }
+
+            if (!mestoVstup.value) {
+                document.getElementById('mestoError').style.display = 'block';
+                jeValidni = false;
+            } else {
+                document.getElementById('mestoError').style.display = 'none';
+            }
+
+            // Validace telefonního čísla
+            if (!validujMobilniCislo(telefonniCisloVstup.value)) {
+                document.getElementById('telefonniCisloError').style.display = 'block';
+                jeValidni = false;
+            } else {
+                document.getElementById('telefonniCisloError').style.display = 'none';
+            }
+
+            // Validace PSČ
+            if (!validujPostovniKod(pscVstup.value)) {
+                document.getElementById('pscError').style.display = 'block';
+                jeValidni = false;
+            } else {
+                document.getElementById('pscError').style.display = 'none';
+            }
+
+            // Pokud je formulář validní, provede formátování a odeslání
+            if (jeValidni) {
+                // Formátování textových polí
+                zvetsiAZmensiPismena(jmenoVstup);
+                zvetsiAZmensiPismena(prijmenniVstup);
+                zvetsiAZmensiANechStejnaPismena(uliceVstup);
+                zvetsiAZmensiANechStejnaPismena(mestoVstup);
+
+                // Formátování telefonního čísla
+                telefonniCisloVstup.value = formatujTelefonniCislo(telefonniCisloVstup.value);
+            } else {
+                // Zabrání odeslání formuláře, pokud není validní
+                event.preventDefault();
+            }
+        });
+
+        // Funkce pro formátování českého telefonního čísla
+        function formatujTelefonniCislo(phoneNumber) {
+            let cisloBezMezer = phoneNumber.replace(/\D/g, '');
+
+            if (cisloBezMezer.length === 9) {
+                return cisloBezMezer.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+            }
+
+            if (cisloBezMezer.length === 12 && cisloBezMezer.startsWith('420')) {
+                return cisloBezMezer.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '+420 $1 $2 $3 $4');
+            }
+
+            return phoneNumber;
+        }
+
+    });
+</script>
+
+<!-- Načítání knihoven jQuery a Bootstrap pro interaktivitu -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

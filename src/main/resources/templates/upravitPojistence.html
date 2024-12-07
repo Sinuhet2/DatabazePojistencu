@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <title>Upravit pojištěnce</title>
+  <!-- Načítání Bootstrap CSS pro responzivní design -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- Načítání fragmentu pro navigaci -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<!-- Pokud existuje pojištěnec, zobrazuje se formulář pro jeho úpravu -->
+<article th:if="${pojistenec != null}" id="formularProUpravu" class="mt-4 mb-3 offset-1 flex-grow-1">
+  <h3 class="my-4">Upravit údaje pojištěnce</h3>
+
+  <!-- Formulář pro úpravu údajů pojištěnce -->
+  <form method="post" th:action="@{/pojistenec/update/{id}(id=${pojistenec.id})}" enctype="multipart/form-data" id="pojistenecForm">
+
+    <!-- Řádek 1: Jméno a Příjmení -->
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="jmeno">Jméno</label>
+        <input type="text" class="form-control" id="jmeno" name="jmeno" th:value="${pojistenec.jmeno}">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="prijmenni">Příjmení</label>
+        <input type="text" class="form-control" id="prijmenni" name="prijmenni" th:value="${pojistenec.prijmenni}">
+      </div>
+    </div>
+
+    <!-- Řádek 2: Telefonní číslo a Email -->
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="telefonniCislo">Telefonní číslo</label>
+        <input type="text" class="form-control" id="telefonniCislo" name="telefonniCislo" th:value="${pojistenec.telefonniCislo}">
+        <small id="telefonniCisloError" class="form-text text-danger" style="display:none;">Telefonní číslo není validní.</small>
+      </div>
+      <div class="form-group col-md-4">
+        <label for="email">Email</label>
+        <input type="email" class="form-control" id="email" name="email" th:value="${pojistenec.email}">
+      </div>
+    </div>
+
+    <!-- Řádek 3: Ulice a Město -->
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="ulice">Ulice a číslo popisné</label>
+        <input type="text" class="form-control" id="ulice" name="ulice" th:value="${pojistenec.ulice}">
+      </div>
+      <div class="form-group col-md-4">
+        <label for="mesto">Město</label>
+        <input type="text" class="form-control" id="mesto" name="mesto" th:value="${pojistenec.mesto}">
+      </div>
+    </div>
+
+    <!-- Řádek 5: PSČ -->
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="psc">PSČ</label>
+        <input type="text" class="form-control" id="psc" name="psc" th:value="${pojistenec.psc}">
+        <small id="pscError" class="form-text text-danger" style="display:none;">PSČ není validní.</small>
+      </div>
+    </div>
+
+    <!-- Řádek 6: Profilová fotka (Upload souboru) -->
+    <div class="form-row">
+      <div class="form-group col-md-4">
+        <label for="obrazek">Profilová fotografie</label>
+        <input type="file" id="obrazek" name="obrazek" class="form-control-file">
+      </div>
+    </div>
+
+    <!-- Tlačítko pro odeslání formuláře -->
+    <button type="submit" class="btn btn-primary btn-lg offset-md-5">Uložit změny</button>
+  </form>
+</article>
+
+<!-- Načítání fragmentu pro zápatí -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<script>
+  // Funkce pro zkapitalizování prvního písmene každého slova
+  function zvetsiAZmensiPismena(inputElement) {
+    let value = inputElement.value.trim();
+    if (value) {
+      let slova = value.split(' ');
+      let capitalizedValue = slova.map(slovo => {
+        return slovo.charAt(0).toUpperCase() + slovo.slice(1).toLowerCase();
+      }).join(' ');
+      inputElement.value = capitalizedValue;
+    }
+  }
+
+  // Funkce pro zkapitalizování prvního písmene prvního slova a zbytek na malá písmena
+  function zvetsiAZmensiANechStejnaPismena(inputElement) {
+    let valueB = inputElement.value.trim();
+    if (valueB) {
+        let slovaB = valueB.split(' ');
+
+        // Použije pravidla pro kapitalizaci a malá písmena
+        let newValueB = slovaB.map((slovo, index) => {
+            if (index === 0) {
+                // Pro první slovo kapitálka na prvním písmeni
+                return slovo.charAt(0).toUpperCase() + slovo.slice(1).toLowerCase();
+            } else {
+                // Pro následující slova první písmeno stejné a zbytek malá písmena
+                return slovo.charAt(0) + slovo.slice(1).toLowerCase();
+            }
+        }).join(' ');
+
+        // Nastaví novou hodnotu
+        inputElement.value = newValueB;
+    }
+  }
+
+  // Funkce pro validaci telefonního čísla (základní validace pro české telefonní číslo)
+  function validujTelefonniCislo(phoneNumber) {
+    const phoneRegex = /^(?:\+420|420)?\d{9}$/;
+    return phoneRegex.test(phoneNumber);
+  }
+
+  // Funkce pro validaci PSČ (pro Českou republiku)
+  function validujPostovniKod(postalCode) {
+    const postalCodeRegex = /^[0-9]{5}$/; // Formát českého PSČ (5 číslic)
+    return postalCodeRegex.test(postalCode);
+  }
+
+  // Funkce pro formátování telefonního čísla (odstraní mezery před odesláním)
+  function formatujTelefonniCislo(phoneNumber) {
+    return phoneNumber.replace(/\s+/g, '').trim(); // Odstraní mezery
+  }
+
+  // Funkce pro formátování PSČ (odstraní mezery před odesláním)
+  function formatujPostovniKod(postalCode) {
+    return postalCode.replace(/\s+/g, '').trim(); // Odstraní mezery
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('pojistenecForm');
+
+    // Předvyplnění polí odstraněním mezer v telefonním čísle a PSČ
+    var telefonniCisloVstup = document.getElementById('telefonniCislo');
+    var pscVstup = document.getElementById('psc');
+
+    // Před odstraněním mezer při načítání stránky
+    if (telefonniCisloVstup) {
+      telefonniCisloVstup.value = telefonniCisloVstup.value.replace(/\s+/g, '');
+    }
+
+    if (pscVstup) {
+      pscVstup.value = pscVstup.value.replace(/\s+/g, '');
+    }
+
+    // Funkce pro formátování telefonního čísla před odesláním
+    function formatujTelefonniCisloProOdeslani(phoneNumber) {
+      phoneNumber = phoneNumber.replace(/\s+/g, ''); // Odstraní mezery
+      if (phoneNumber.length === 9) {
+        return phoneNumber.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3'); // Formátování jako "123 456 789"
+      } else if (phoneNumber.length === 12 && phoneNumber.startsWith('420')) {
+        return phoneNumber.replace(/(\+420|\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4'); // Formátování jako "+420 123 456 789"
+      }
+      return phoneNumber; // Pokud to neodpovídá formátu, vrátí původní číslo
+    }
+
+    // Funkce pro formátování PSČ před odesláním (pro Českou republiku)
+    function formatujPostovniKodProOdeslani(postalCode) {
+      postalCode = postalCode.replace(/\s+/g, ''); // Odstraní mezery
+      return postalCode; // Český formát PSČ nevyžaduje mezery, takže vrací vyčištěnou hodnotu
+    }
+
+    form.addEventListener('submit', function(event) {
+      let jeValidni = true;
+
+      // Získání hodnot z formuláře
+      var jmenoVstup = document.getElementById('jmeno');
+      var prijmenniVstup = document.getElementById('prijmenni');
+      var telefonniCisloVstup = document.getElementById('telefonniCislo');
+      var pscVstup = document.getElementById('psc');
+      var uliceVstup = document.getElementById('ulice');
+      var mestoVstup = document.getElementById('mesto');
+
+      // Převod písmen na správnou velikost
+      zvetsiAZmensiPismena(jmenoVstup);
+      zvetsiAZmensiPismena(prijmenniVstup);
+      zvetsiAZmensiANechStejnaPismena(uliceVstup);
+      zvetsiAZmensiANechStejnaPismena(mestoVstup);
+
+      // Validace telefonního čísla
+      if (!validujTelefonniCislo(telefonniCisloVstup.value)) {
+        document.getElementById('telefonniCisloError').style.display = 'block';
+        jeValidni = false;
+      } else {
+        document.getElementById('telefonniCisloError').style.display = 'none';
+      }
+
+      // Validace PSČ
+      if (!validujPostovniKod(pscVstup.value)) {
+        document.getElementById('pscError').style.display = 'block';
+        jeValidni = false;
+      } else {
+        document.getElementById('pscError').style.display = 'none';
+      }
+
+      // Formátování telefonního čísla a PSČ před odesláním
+      telefonniCisloVstup.value = formatujTelefonniCisloProOdeslani(telefonniCisloVstup.value);
+      pscVstup.value = formatujPostovniKodProOdeslani(pscVstup.value);
+
+      // Pokud je formulář nevalidní, zastaví se jeho odeslání
+      if (!jeValidni) {
+        event.preventDefault();
+      }
+    });
+  });
+</script>
+
+<!-- Načítání jQuery a Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

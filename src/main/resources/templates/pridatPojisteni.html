@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Přidat Pojištění</title>
+    <!-- Načítání Bootstrap CSS pro responzivní design -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- Načítání fragmentu pro navigaci -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<!-- Zkontrolujte, zda je pojistenec přítomen -->
+<article class="flex-grow-1 mb-5" th:if="${pojistenec != null}">
+    <div id="pojisteniForm" class="mt-4 offset-1">
+        <h3>Přidat Pojištění</h3>
+
+        <!-- Formulář pro přidání pojištění -->
+        <form method="post" th:action="@{/pojistenec/{id}/pridatPojisteni(id=${pojistenec.id})}" enctype="multipart/form-data">
+
+            <!-- Řádek 1: Typ pojištění -->
+            <div class="form-row">
+                <div class="form-group col-md-8">
+                    <label for="typPojisteni">Typ pojištění*</label>
+                    <select class="form-control" id="typPojisteni" name="typPojisteni" required>
+                        <!-- Výběr typu pojištění s podmínkami pro zvolení správného typu -->
+                        <option value="osob"
+                                th:selected="${pojistenec.pojisteni != null && !pojistenec.pojisteni.isEmpty() && pojistenec.pojisteni[0].typPojisteni == 'osob'}">
+                            Pojištění osob
+                        </option>
+                        <option value="majetku"
+                                th:selected="${pojistenec.pojisteni != null && !pojistenec.pojisteni.isEmpty() && pojistenec.pojisteni[0].typPojisteni == 'majetku'}">
+                            Pojištění majetku
+                        </option>
+                        <option value="zájmu"
+                                th:selected="${pojistenec.pojisteni != null && !pojistenec.pojisteni.isEmpty() && pojistenec.pojisteni[0].typPojisteni == 'zájmu'}">
+                            Pojištění zájmu
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Řádek 2: Částka a Předmět pojištění -->
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="castka">Částka (Kč)*</label>
+                    <input type="number" class="form-control" id="castka" name="castka" required min="1" step="0.01">
+                    <!-- Zobrazení chyby pro negativní částku -->
+                    <small id="castkaError" class="form-text text-danger" style="display:none;">Částka musí být minimálně 1 Kč.</small>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="predmetPojisteni">Předmět pojištění*</label>
+                    <input type="text" class="form-control" id="predmetPojisteni" name="predmetPojisteni" required>
+                </div>
+            </div>
+
+            <!-- Řádek 3: Platnost od a Platnost do -->
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="platnostOd">Platnost od*</label>
+                    <!-- Použití type="date" pro zajištění správného formátu data -->
+                    <input type="date" class="form-control" id="platnostOd" name="datumOd"
+                           th:value="${pojisteni != null && pojisteni.datumOd != null ? pojisteni.datumOd : ''}" required>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="platnostDo">Platnost do*</label>
+                    <!-- Použití type="date" pro zajištění správného formátu data -->
+                    <input type="date" class="form-control" id="platnostDo" name="datumDo"
+                           th:value="${pojisteni != null && pojisteni.datumDo != null ? pojisteni.datumDo : ''}" required>
+                </div>
+            </div>
+
+            <!-- Tlačítko pro odeslání formuláře -->
+            <button type="submit" class="btn btn-primary btn-lg offset-5 my-4">Přidat pojištění</button>
+        </form>
+    </div>
+
+    <!-- Pokud není pojistenec přítomen, zobrazí se zpráva -->
+    <div th:if="${pojistenec == null}">
+        <p>Pojištěnec není k dispozici.</p>
+    </div>
+</article>
+
+<!-- Načítání fragmentu pro zápatí -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<script>
+    // Validace formuláře před odesláním
+    document.addEventListener('DOMContentLoaded', function () {
+        var formular = document.querySelector('form');
+        var castkaInput = document.getElementById('castka');
+
+        formular.addEventListener('submit', function (event) {
+            var jeValidni = true;
+
+            // Validace pole Částka (neměla by být záporná)
+            if (parseFloat(castkaInput.value) < 0) {
+                document.getElementById('castkaError').style.display = 'block';
+                jeValidni = false;
+            } else {
+                document.getElementById('castkaError').style.display = 'none';
+            }
+
+            // Zabrání odeslání formuláře, pokud není validní
+            if (!jeValidni) {
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

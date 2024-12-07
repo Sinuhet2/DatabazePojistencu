@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Seznam pojištěnců</title>
+    <!-- Načítání Bootstrap pro styling a responzivní rozvržení -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- Načítání navigační lišty z fragmentu -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<article class="container mt-5 mb-5 flex-grow-1" id="obsah">
+    <div class="col-md-9 mx-auto">
+        <div id="tabulkaHledaniPojistenci" class="panel">
+
+            <!-- Titulek a úvodní text pro seznam pojištěnců -->
+            <h2>Vítejte v databázi pojištěnců</h2>
+            <p>Spravujte seznam pojištěnců, přidávejte nové, nebo vyhledávejte existující.</p>
+
+            <!-- Vyhledávací formulář -->
+            <div class="form-group mt-5 d-flex">
+                <input type="text" class="form-control mt-2 mr-3" style="width: 500px;" id="radekProHledani" placeholder="Zadejte jméno">
+                <button class="btn btn-secondary mt-2" id="tlacitkoHledani">Hledat pojistence</button>
+            </div>
+
+            <!-- Tabulka pro zobrazení pojištěnců (na začátku je skrytá) -->
+            <table id="tabulkaPojistencu" class="table border table-striped mt-4" style="display: none;">
+                <thead>
+                <tr>
+                    <th>Jméno a Příjmení</th>
+                    <th>Telefon</th>
+                    <th>Akce</th>
+                </tr>
+                </thead>
+                <tbody id="seznamPojistencu">
+                <!-- Obsah tabulky bude dynamicky doplňován pomocí JavaScriptu -->
+                </tbody>
+            </table>
+
+            <!-- Tlačítko pro zobrazení/skrytí seznamu pojištěnců -->
+            <div id="kontejnerProTlacitkoZobrazeni" style="display: none;">
+                <button class="btn btn-primary" id="tlacitkoZobrazeni">Skrýt seznam pojištěnců</button>
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- Načítání zápatí stránky z fragmentu -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Delegace události pro tlačítka smazání pomocí delegace událostí
+        document.getElementById('seznamPojistencu').addEventListener('click', function(event) {
+            if (event.target && event.target.matches('button.tlacitkoSmazat')) {
+                var button = event.target;
+                var id = button.getAttribute('data-id');  // Získání ID z atributu data-id
+                var jmeno = button.getAttribute('data-name');  // Získání jména z atributu data-name
+                potvrdSmazani(event, id, jmeno);  // Zavolání funkce pro potvrzení smazání
+            }
+        });
+
+        // Funkce pro potvrzení smazání pojištěnce
+        function potvrdSmazani(event, id, jmeno) {
+            event.preventDefault();  // Zamezení okamžité akce
+
+            var potvrzujiciZprava = `Opravdu chcete smazat pojištěnce ${jmeno}?`;
+            var potvrzeni = confirm(potvrzujiciZprava);
+
+            if (potvrzeni) {
+                // Odeslání požadavku pro smazání pomocí fetch API
+                fetch(`/pojistenec/delete/${id}`, {
+                    method: 'POST',  // Použití metody POST namísto DELETE
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert(`Pojištěnec byl úspěšně smazán.`);
+                        var radekKeSmazani = document.getElementById(`radek-${id}`);
+                        if (radekKeSmazani) {
+                            radekKeSmazani.remove();  // Smazání řádku z tabulky
+                        }
+                    } else {
+                        alert('Došlo k chybě při mazání pojištěnce.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Chyba při mazání:', error);
+                    alert('Chyba při mazání pojištěnce.');
+                });
+            } else {
+                console.log("Uživatel zrušil mazání:", id);  // Logování zrušení akce
+            }
+        }
+
+        // Logika pro vyhledávání pojištěnců (klientská část)
+        document.getElementById('tlacitkoHledani').addEventListener('click', function() {
+            const query = document.getElementById('radekProHledani').value.trim();
+
+            if (!query) {
+                alert('Prosím zadejte nějaký text pro hledání.');
+                return; // Pokud je dotaz prázdný, hledání se zastaví
+            }
+
+            // Zobrazení indikátoru načítání (pokud je potřeba)
+            const teloTabulky = document.getElementById('seznamPojistencu');
+            teloTabulky.innerHTML = '<tr><td colspan="4" class="text-center">Hledám...</td></tr>';  // Dočasná zpráva
+
+            // Fetch vyhledávacích výsledků z backendu
+            fetch(`/pojistenec/seznamPojistencu/search?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    teloTabulky.innerHTML = ''; // Vymazání předchozího obsahu
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        // Zobrazení tabulky a tlačítka pro skrytí/zobrazení
+                        document.getElementById('tabulkaPojistencu').style.display = 'block';
+                        document.getElementById('kontejnerProTlacitkoZobrazeni').style.display = 'block';
+
+                        data.forEach(pojistenec => {
+                            const radek = document.createElement('tr');
+                            radek.id = `radek-${pojistenec.id}`;
+
+                            const bunkaJmena = document.createElement('td');
+                            const odkaz = document.createElement('a');
+                            odkaz.href = `/pojistenec/pojistenecDetail/${pojistenec.id}`;
+                            odkaz.innerText = `${pojistenec.jmeno} ${pojistenec.prijmenni}`;
+                            bunkaJmena.appendChild(odkaz);
+
+                            const bunkaTelefonu = document.createElement('td');
+                            bunkaTelefonu.innerText = pojistenec.telefonniCislo;
+
+                            const bunkaAkci = document.createElement('td');
+                            // Tlačítko pro úpravu pojištěnce
+                            const tlacitkoUpravit = document.createElement('button');
+                            tlacitkoUpravit.className = 'btn btn-warning btn-sm tlacitkoUpravit mr-3';
+                            tlacitkoUpravit.innerText = 'Upravit';
+                            tlacitkoUpravit.setAttribute('data-id', pojistenec.id);
+                            tlacitkoUpravit.setAttribute('data-name', `${pojistenec.jmeno} ${pojistenec.prijmenni}`);
+                            const url = `/pojistenec/upravitPojistence/${pojistenec.id}`;
+
+                            tlacitkoUpravit.onclick = function() {
+                                window.location.href = url;  // Přejít na stránku pro úpravu
+                            };
+
+                            bunkaAkci.appendChild(tlacitkoUpravit);
+
+                            // Tlačítko pro smazání
+                            const tlacitkoSmazat = document.createElement('button');
+                            tlacitkoSmazat.className = 'btn btn-danger btn-sm tlacitkoSmazat';
+                            tlacitkoSmazat.innerText = 'Odstranit';
+                            tlacitkoSmazat.setAttribute('data-id', pojistenec.id);
+                            tlacitkoSmazat.setAttribute('data-name', `${pojistenec.jmeno} ${pojistenec.prijmenni}`);
+                            bunkaAkci.appendChild(tlacitkoSmazat);
+
+                            radek.appendChild(bunkaJmena);
+                            radek.appendChild(bunkaTelefonu);
+                            radek.appendChild(bunkaAkci);
+
+                            teloTabulky.appendChild(radek);
+                        });
+                    } else {
+                        teloTabulky.innerHTML = `<tr><td colspan="4" class="text-center">Žádní pojištěnci nenalezeni.</td></tr>`;
+                        document.getElementById('kontejnerProTlacitkoZobrazeni').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Chyba při vyhledávání:', error);
+                    teloTabulky.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Chyba při načítání seznamu pojištěnců.</td></tr>';
+                    document.getElementById('kontejnerProTlacitkoZobrazeni').style.display = 'none';
+                });
+        });
+
+        // Funkce pro zobrazení/skrytí seznamu pojištěnců
+        document.getElementById('tlacitkoZobrazeni').addEventListener('click', function() {
+            const tabulka = document.getElementById('tabulkaPojistencu');
+            const jeViditelna = tabulka.style.display !== 'none';
+            tabulka.style.display = jeViditelna ? 'none' : 'block';
+            this.innerText = jeViditelna ? 'Zobrazit seznam pojištěnců' : 'Skrýt seznam pojištěnců';
+        });
+    });
+</script>
+
+<!-- Načítání externích knihoven pro JavaScript -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

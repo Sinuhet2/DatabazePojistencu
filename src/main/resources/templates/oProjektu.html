@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>O Projektu</title>
+    <!-- Načítání Bootstrap CSS pro responzivní design -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+<!-- Načítání fragmentu pro navigaci -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<!-- Hlavní obsah stránky "O Projektu" -->
+<article class="container mx-5 my-5 col-8 flex-grow-1">
+    <h2>O Projektu</h2>
+    <p>Toto je webová aplikace na správu databáze pojištěnců.</p>
+
+    <p>Co je možné zde dělat?</p>
+    <ul>
+        <li>Vytvořit pojištěnce</li>
+        <li>Vytvořit pojištění</li>
+        <li>Zobrazit detail pojištěnce včetně seznamu jeho pojištění</li>
+        <li>Zobrazit detail pojištění</li>
+        <li>Zobrazit seznam pojištěnců</li>
+        <li>Vyhledat v tomto seznamu pojištěnce podle jména</li>
+        <li>Odstranit pojištěnce včetně všech jeho pojištění</li>
+        <li>Zobrazit seznam pojištění</li>
+        <li>Vyhledávat v seznamu pojištění podle jména pojištěnce</li>
+        <li>Odstranit pojištění</li>
+        <li>Upravovat detail pojištěnce</li>
+        <li>Upravovat detail pojištění</li>
+        <li>Nahrát pojištěnci jeho vlastní profilovou fotografii</li>
+    </ul>
+
+    <p>Toto je jeden z prvních projektů, které jsem začal v rámci rekvalifikačního kurzu u společnosti <a href="https://www.itnetwork.cz">iTnetwork</a> a v jeho rozvoji pokračuji i nadále. Doufám, že se vám bude líbit.</p>
+</article>
+
+<!-- Načítání fragmentu pro zápatí -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<!-- Načítání potřebných JavaScript knihoven -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>O mně</title>
+    <!-- Načítání stylů z Bootstrapu pro responzivní design -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+<!-- Načítání fragmentu pro navigaci -->
+<div th:replace="~{fragments/navigace :: navigace}"></div>
+
+<!-- Obsah stránky o mně -->
+<article class="container mx-5 my-5 flex-grow-1">
+    <div class="row">
+        <!-- Profilová fotka -->
+        <div class="col-12 col-md-3">
+            <img src="/images/portret.jpeg" alt="muj-portret" class="img-fluid">
+        </div>
+
+        <!-- Text o mně -->
+        <div class="col-12 col-md-5">
+            <h2>O mně</h2>
+            <p>Jmenuji se Vojtěch Černý a je mi 27 let.</p>
+            <p>Mezi moje záliby patří literatura, hudba a nově i programování.</p>
+        </div>
+    </div>
+</article>
+
+<!-- Načítání fragmentu pro zápatí -->
+<div th:replace="~{fragments/zapati :: zapati}"></div>
+
+<!-- Načítání potřebných JavaScript knihoven -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
