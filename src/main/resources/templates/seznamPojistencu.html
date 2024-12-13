@@ -21,10 +21,10 @@
             <h2>Seznam pojištěnců</h2>
 
             <!-- Formulář pro hledání pojištěnce -->
-            <div class="form-group d-flex mt-5">
-                <input type="text" class="form-control mr-3 mt-2" id="vstupHledani" placeholder="Zadejte jméno" th:value="${query}">
-                <button class="btn btn-secondary mt-2 text-nowrap" id="tlacitkoHledat">Hledat pojištěnce</button>
-            </div>
+            <form class="form-group d-flex mt-5" id="formularHledani" th:action="@{/pojistenec/seznamPojistencu}" method="get">
+                <input type="text" class="form-control mr-3 mt-2" id="vstupHledani" placeholder="Zadejte jméno" name="query" th:value="${query}">
+                <button class="btn btn-secondary mt-2 text-nowrap" id="tlacitkoHledat" type="submit">Hledat pojištěnce</button>
+            </form>
 
             <!-- Tabulka pro zobrazení pojištěnců -->
             <table id="tabulkaPojistencu" class="table border table-striped mt-4">
@@ -65,6 +65,9 @@
                         </div>
                     </td>
                 </tr>
+                <tr th:if="${nenalezeno}">
+                    <td colspan="4" class="text-center text-danger">Žádný pojištěnec nenalezen.</td>
+                </tr>
                 </tbody>
             </table>
 
@@ -92,7 +95,12 @@
                     </li>
                 </ul>
             </nav>
+            <!-- Tlačítko Zobrazit všechny -->
+            <th:block th:if="${query}">
+                <button id="tlacitkoZobrazitVsechny" class="btn btn-info mt-2" onclick="location.href='/pojistenec/seznamPojistencu'">Zobrazit všechny</button>
+            </th:block>
         </div>
+    </div>
     </div>
 </article>
 
@@ -100,109 +108,46 @@
 <div th:replace="~{fragments/zapati :: zapati}"></div>
 
 <script>
-    // Přidání funkce pro hledání pojištěnců podle zadání do vyhledávacího pole
-    document.getElementById('tlacitkoHledat').addEventListener('click', function () {
-        const query = document.getElementById('vstupHledani').value.trim();
-
-        if (!query) {
-            alert('Prosím zadejte nějaký text pro hledání.');
-            return;
-        }
-
-        // Přesměrování na první stránku s vyhledávacím dotazem
-        window.location.href = '/pojistenec/seznamPojistencu?page=1&query=' + encodeURIComponent(query);
-    });
-
-function filterPojistenciList(hledanaHodnota) {
-    const hledanyVyraz = hledanaHodnota.trim().toLowerCase();
-    const teloTabulky = document.querySelector('#seznamPojistencu');
-    const rady = teloTabulky.querySelectorAll('tr');
-    let found = false;
-
-    // Skrýt všechny řádky, které neodpovídají hledanému výrazu
-    rady.forEach(row => {
-        const bunkaJmena = row.querySelector('td:nth-child(1)');
-        if (bunkaJmena) {
-            const textJmena = bunkaJmena.textContent.trim().toLowerCase();
-            if (textJmena.includes(hledanyVyraz)) {
-                row.style.display = ''; // Zobrazíme odpovídající řádky
-                found = true;
-            } else {
-                row.style.display = 'none'; // Skryjeme neodpovídající řádky
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validace prázdného vstupu při hledání
+        document.getElementById('formularHledani').addEventListener('submit', function(event) {
+            const vstupHledani = document.getElementById('vstupHledani').value.trim();
+            if (!vstupHledani) {
+                event.preventDefault();
+                alert('Prosím zadejte nějaký text pro hledání.');
             }
-        }
-    });
+        });
 
-    // Správa chybové hlášky
-    let chybovaHlaseni = document.querySelector('#radekNenalezeno');
-    if (!found) {
-        if (!chybovaHlaseni) {
-            // Pokud neexistuje, vytvoříme nový řádek pro chybovou hlášku
-            chybovaHlaseni = document.createElement('tr');
-            chybovaHlaseni.id = 'radekNenalezeno';
-            chybovaHlaseni.innerHTML = `
-                <td colspan="3" class="text-center text-danger">
-                    Žádní pojištěnci nenalezeni.
-                </td>`;
-            teloTabulky.appendChild(chybovaHlaseni);
-        }
-    } else if (chybovaHlaseni) {
-        // Pokud je nalezen záznam, odstraníme řádek s chybovou hláškou
-        chybovaHlaseni.remove();
-    }
-}
+        // Tlačítko Zobrazit všechny - reset backendového a frontendového filtru
+        window.resetFiltr = function() {
+            document.getElementById('vstupHledani').value = '';
+            window.location.href = '/pojistenec/seznamPojistencu'; // Načtení všech záznamů
+        };
 
-// Zavolání funkce pro filtrování pojištěnců po načtení stránky
-document.addEventListener('DOMContentLoaded', function() {
-    filterPojistenciList(''); // Zavoláme pro zobrazení všech pojištěnců
-});
-
-
-    // Funkce pro vytvoření tlačítka pro zobrazení všech pojištěnců
-    function vytvorTlacitkoZobrazitVsechny() {
-        const teloTabulky = document.querySelector('#seznamPojistencu').parentElement;
-
-        // Kontrola, zda tlačítko již existuje, aby se nevytvářelo zbytečně
-        if (!document.getElementById('tlacitkoZobrazitVsechny')) {
-            var tlacitkoZobrazitVsechny = document.createElement('button');
-            tlacitkoZobrazitVsechny.id = 'tlacitkoZobrazitVsechny';
-            tlacitkoZobrazitVsechny.classList.add('btn', 'btn-info', 'mt-2', 'text-nowrap');
-            tlacitkoZobrazitVsechny.textContent = 'Zobrazit všechny';
-            tlacitkoZobrazitVsechny.style.display = 'inline-block';
-
-            // Přidání tlačítka po tabulce
-            teloTabulky.parentElement.appendChild(tlacitkoZobrazitVsechny);
-
-            // Přidání event listeneru pro tlačítko "Zobrazit všechny"
-            tlacitkoZobrazitVsechny.addEventListener('click', function() {
-                document.getElementById('vstupHledani').value = ''; // Vymazání vyhledávacího pole
-                filterPojistenciList(''); // Zobrazení všech pojištěnců (vymazání filtru)
-                tlacitkoZobrazitVsechny.remove(); // Smazání tlačítka "Zobrazit všechny"
-                window.location.href = '/pojistenec/seznamPojistencu?page=1'; // Načtení stránky s všemi pojištěnci
+        // Frontendová filtrace
+        const vstupHledani = document.getElementById('vstupHledani');
+        vstupHledani.addEventListener('input', function() {
+            const hledanaHodnota = vstupHledani.value.trim().toLowerCase();
+            const radky = document.querySelectorAll('#seznamPojistencu tr');
+            radky.forEach(row => {
+                const bunka = row.querySelector('td:nth-child(1) span');
+                if (bunka) {
+                    const text = bunka.textContent.trim().toLowerCase();
+                    row.style.display = text.includes(hledanaHodnota) ? '' : 'none';
+                }
             });
-        }
-    }
+        });
 
-    // Kontrola, zda je vyhledávací dotaz v URL a pokud ano, zobrazit tlačítko pro zobrazení všech
-    const query = new URLSearchParams(window.location.search).get('query');
-    if (query) {
-        document.getElementById('vstupHledani').value = query;  // Předvyplnění vyhledávacího pole
-        vytvorTlacitkoZobrazitVsechny();  // Zobrazení tlačítka pro zobrazení všech pojištěnců
-    }
-
-    // Potvrzení před smazáním pojištěnce
-    document.querySelectorAll('.btn-danger').forEach(function(tlacitkoSmazat) {
-        tlacitkoSmazat.addEventListener('click', function(event) {
-            const id = event.target.id.replace('tlacitkoSmazat', '');  // Extrahujeme ID pojištěnce
-            const formular = document.getElementById('formularSmazat' + id);  // Získáme formulář pro dané ID
-            const jmeno = event.target.getAttribute('data-name');  // Získáme jméno pojištěnce
-
-            // Potvrzení před smazáním
-            const potvrzeni = confirm(`Opravdu chcete odstranit pojištěnce: ${jmeno}?`);
-
-            if (potvrzeni) {
-                formular.submit();  // Odeslání formuláře, pokud uživatel potvrdí
-            }
+        // Potvrzení před smazáním pojištěnce
+        document.querySelectorAll('button[id^="tlacitkoSmazat"]').forEach(button => {
+            button.addEventListener('click', function(event) {
+                const id = button.id.replace('tlacitkoSmazat', '');
+                const jmeno = button.getAttribute('data-name');
+                const potvrzeni = confirm(`Opravdu chcete odstranit pojištěnce: ${jmeno}?`);
+                if (potvrzeni) {
+                    document.getElementById('formularSmazat' + id).submit();
+                }
+            });
         });
     });
 </script>

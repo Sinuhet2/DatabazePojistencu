@@ -89,7 +89,9 @@ public class PojistenecController {
         model.addAttribute("pojistenci", stranaPojistencu.getContent());
         model.addAttribute("celkemStran", stranaPojistencu.getTotalPages());
         model.addAttribute("soucasnaStrana", page);
-        model.addAttribute("vstup", query);
+        model.addAttribute("query", query);
+        model.addAttribute("nenalezeno", stranaPojistencu.isEmpty()); //Pokud nejsou nalezeni žádní pojištěnci
+
         return "seznamPojistencu";  // Návrat šablony pro seznam pojištěnců
     }
 
