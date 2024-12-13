@@ -22,6 +22,14 @@ public interface PojisteniRepository extends JpaRepository<Pojisteni, Long> {
     // Metoda pro vyhledání pojištění na základě jména a příjmení pojištěnce.
     // Používá LIKE operátor pro vyhledávání, které obsahuje zadaný text.
     // Výsledek je stránkovaný (Page), což znamená, že bude vrácena pouze část záznamů na jedné stránce.
+    @Query("SELECT p FROM Pojisteni p WHERE " +
+            "p.pojistenec.jmeno LIKE :query% OR p.pojistenec.prijmenni LIKE :query%")
+    Page<Pojisteni> findByPojistenecJmenoOrPrijmenniStartingWithIgnoreCase(@Param("query") String query, Pageable pageable);
+
+    // Hledání podle začátku jména a příjmení (spojené dohromady)
     @Query("SELECT p FROM Pojisteni p WHERE CONCAT(p.pojistenec.jmeno, ' ', p.pojistenec.prijmenni) LIKE %:query%")
-    Page<Pojisteni> findByPojistenecNameContaining(@Param("query") String query, Pageable pageable);
+    Page<Pojisteni> findByPojistenecJmenoPrijmenniStartingWithIgnoreCase(@Param("query") String query, Pageable pageable);
+
+
+
 }

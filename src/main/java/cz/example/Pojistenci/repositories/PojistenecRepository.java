@@ -20,4 +20,10 @@ public interface PojistenecRepository extends JpaRepository<Pojistenec, Long> {
     // Metoda pro vyhledání pojištěnců, jejichž jméno a příjmení začínají zadanými řetězci.
     // Neprovádí stránkování, vrací pouze seznam pojištěnců (List).
     List<Pojistenec> findByJmenoStartingWithAndPrijmenniStartingWith(String jmeno, String prijmeni);
+
+    List<Pojistenec> findByJmenoStartingWithOrPrijmenniStartingWith(String jmeno, String prijmeni);
+
+    Page<Pojistenec> findByJmenoStartingWithOrPrijmenniStartingWith(String jmeno, String prijmeni, Pageable pageable);
+
+
 }

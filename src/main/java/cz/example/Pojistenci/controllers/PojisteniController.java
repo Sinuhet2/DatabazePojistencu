@@ -49,16 +49,24 @@ public class PojisteniController {
         int pageSize = 5;  // Počet položek na stránce
         Pageable pageable = PageRequest.of(page - 1, pageSize);  // Nastavení stránkování pomocí Spring Pageable
 
-        // Načtení pojištění na základě vyhledávacího dotazu nebo bez něj
-        Page<Pojisteni> stranaPojisteni = (query != null && !query.isEmpty()) ?
-                pojisteniService.najdiStranu(query, pageable) :
-                pojisteniService.dejStranu(pageable);
+        Page<Pojisteni> stranaPojisteni;
+
+        // Načítání pojištění na základě vyhledávacího dotazu nebo bez něj
+        if (query != null && !query.isEmpty()) {
+            // Vyhledávání podle jména pojištěnce
+            stranaPojisteni = pojisteniService.najdiPojisteniPodleJmenaPojistence(query, pageable);
+        } else {
+            // Získání všech pojištění
+            stranaPojisteni = pojisteniService.dejVsechnaPojisteni(pageable);
+        }
 
         // Přidání seznamu pojištění do modelu
         model.addAttribute("pojisteni", stranaPojisteni.getContent());
         model.addAttribute("celkemStran", stranaPojisteni.getTotalPages());  // Celkový počet stran
         model.addAttribute("soucasnaStrana", page);  // Aktuální stránka
-        model.addAttribute("vstup", query);  // Parametr pro vyhledávání
+        model.addAttribute("query", query);  // Parametr pro vyhledávání
+        model.addAttribute("nenalezeno", stranaPojisteni.isEmpty()); //Pokud nejsou nalezeni žádní pojištěnci
+
 
         return "seznamPojisteni";  // Název šablony pro zobrazení seznamu pojištění
     }

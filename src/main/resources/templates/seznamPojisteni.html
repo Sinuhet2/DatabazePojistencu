@@ -24,10 +24,6 @@
                 </div>
             </form>
 
-            <div th:if="${#lists.isEmpty(pojisteni)}" class="alert alert-info">
-                V databázi zatím nejsou žádná pojištění.
-            </div>
-
             <!-- Tabulka pro zobrazení pojištění -->
             <table class="table border table-striped mt-4">
                 <thead>
@@ -73,11 +69,14 @@
                         </div>
                     </td>
                 </tr>
+                <tr th:if="${nenalezeno}">
+                    <td colspan="4" class="text-center text-danger">Žádná pojištění nalezena.</td>
+                </tr>
                 </tbody>
             </table>
 
             <!-- Navigace pro stránkování -->
-            <nav id="strankovani" aria-label="Page navigation">
+            <nav id="strankovani" aria-label="Page navigation" th:if="${celkemStran > 0}">
                 <ul class="pagination justify-content-center">
                     <!-- Tlačítko pro předchozí stránku, zobrazuje se pouze pokud nejsme na první stránce -->
                     <li class="page-item" th:if="${soucasnaStrana > 1}">
@@ -100,8 +99,14 @@
                     </li>
                 </ul>
             </nav>
+            <th:block th:if="${query}">
+                <button id="tlacitkoZobrazitVsechny" class="btn btn-info mt-2" onclick="location.href='/pojisteni/seznamPojisteni'">
+                    Zobrazit všechna
+                </button>
+            </th:block>
         </div>
     </div>
+
 </article>
 
 <!-- Načítání fragmentu pro zápatí -->
@@ -109,6 +114,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+
         // Vyhledání všech tlačítek pro smazání
         var tlacitkaSmazat = document.querySelectorAll('button[id^="tlacitkoSmazat"]');
 
@@ -122,87 +128,56 @@
 
         // Funkce pro potvrzení a smazání pojištění
         function potvrdSmazani(event, idPojisteni) {
-            event.preventDefault();  // Zabraňuje odeslání formuláře (nepoužíváme AJAX)
+            event.preventDefault(); // Zabraňuje odeslání formuláře (nepoužíváme AJAX)
 
             // Zobrazení potvrzovacího dialogu
             var potvrzeni = confirm("Opravdu chcete smazat toto pojištění?");
 
             // Pokud uživatel potvrdi, odeslat formulář pro smazání
             if (potvrzeni) {
-                // Najít formulář, který odpovídá konkrétnímu pojištění a odeslat ho
                 var formular = document.getElementById('formularProSmazani' + idPojisteni);
-                formular.submit();  // Odeslání formuláře pro smazání pojištění
+                formular.submit(); // Odeslání formuláře pro smazání pojištění
             } else {
-                console.log("Smazání zrušeno pro ID:", idPojisteni);  // Logování zrušení akce
+                console.log("Smazání zrušeno pro ID:", idPojisteni); // Logování zrušení akce
             }
         }
 
-        // Vyhledání tlačítka pro hledání, vstupního pole a těla tabulky
-        var tlacitkoHledat = document.getElementById('tlacitkoHledat');
+        // Přístup k formulářům a polím
         var vstupHledani = document.getElementById('vstupHledani');
-        var teloTabulky = document.querySelector('#seznamPojisteni tbody');
+        var teloTabulky = document.querySelector('#seznamPojisteni');
+        var tlacitkoHledat = document.getElementById('tlacitkoHledat');
+
 
         // Event listener pro tlačítko hledání
-        tlacitkoHledat.addEventListener('click', function(event) {
-            event.preventDefault();  // Zabraňuje odeslání formuláře pro AJAX-like chování
-
-            var hledanaHodnota = vstupHledani.value.trim();
-            filtrPojisteniList(hledanaHodnota);
-
-            // Odeslání formuláře pro hledání na backendu
-            document.getElementById('formularHledani').submit();
+        document.getElementById('formularHledani').addEventListener('submit', function(event) {
+            if (vstupHledani.value.trim() === '') {
+                event.preventDefault(); // Zamezí odeslání prázdného formuláře
+                alert('Prosím zadejte nějaký text pro hledání.'); // Zobrazení upozornění
+            }
         });
 
-        // Funkce pro filtrování seznamu pojištění podle zadané hodnoty
-        function filtrPojisteniList(hledanaHodnota) {
-            var hledanyVyraz = hledanaHodnota.trim().toLowerCase();
-            var radky = document.querySelectorAll('#seznamPojisteni tbody tr');
+        // Funkce pro lokální filtraci (globálně dostupná)
+        function filtrovatPojisteniList(hledanaHodnota) {
+            const teloTabulky = document.querySelector('#seznamPojisteni');
+            const radky = teloTabulky.querySelectorAll('tr');
+            let found = false;
 
             radky.forEach(function(row) {
-                var jmenoPojistence = row.querySelector('td:nth-child(2) a').textContent.trim().toLowerCase();
-                var castiJmena = jmenoPojistence.split(' ');
-                var krestniJmeno = castiJmena[0];
-                var prijmenni = castiJmena[1] || '';
-
-                if (krestniJmeno.toLowerCase().startsWith(hledanyVyraz) || prijmenni.toLowerCase().startsWith(hledanyVyraz)) {
-                    row.style.display = ''; // Zobrazí řádek, pokud došlo k shodě
-                } else {
-                    row.style.display = 'none'; // Skryje řádek, pokud nebyla shoda
+                const bunkaJmena = row.querySelector('td:nth-child(2) a');
+                if (bunkaJmena) {
+                    const jmenoPojistence = bunkaJmena.textContent.trim().toLowerCase();
+                    if (jmenoPojistence.includes(hledanaHodnota)) {
+                        row.style.display = '';
+                        found = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
                 }
             });
-        }
 
-        // Funkce pro vytvoření a přidání tlačítka pro resetování filtru (Zobrazit všechny)
-        function vytvorTlacitkoZobrazitVsechny() {
-            const teloTabulky = document.querySelector('#seznamPojisteni').parentElement;
-
-            // Kontrola, zda tlačítko již existuje, aby nedocházelo k duplikaci
-            if (!document.getElementById('tlacitkoZobrazitVsechny')) {
-                var tlacitkoZobrazitVsechny = document.createElement('button');
-                tlacitkoZobrazitVsechny.id = 'tlacitkoZobrazitVsechny';
-                tlacitkoZobrazitVsechny.classList.add('btn', 'btn-info', 'mt-2', 'text-nowrap');
-                tlacitkoZobrazitVsechny.textContent = 'Zobrazit všechny';
-                tlacitkoZobrazitVsechny.style.display = 'inline-block';
-
-                // Přidání tlačítka na konec tabulky
-                teloTabulky.parentElement.appendChild(tlacitkoZobrazitVsechny);
-
-                // Přidání event listeneru pro tlačítko "Zobrazit všechny"
-                tlacitkoZobrazitVsechny.addEventListener('click', function() {
-                    vstupHledani.value = '';  // Vymazání vyhledávacího pole
-                    filtrPojisteniList(''); // Zobrazení všech pojištění (vymazání filtru)
-                    tlacitkoZobrazitVsechny.remove();  // Smazání tlačítka "Zobrazit všechny"
-                    window.location.href = '/pojisteni/seznamPojisteni'; // Načtení stránky s všemi pojištěními
-                });
+            if (!found) {
+                console.log("Žádná data nenalezena."); // Debugging pro nenalezené položky
             }
-        }
-
-        // Zkontrolování, zda je v URL přítomen dotaz pro hledání
-        const query = new URLSearchParams(window.location.search).get('query');
-        if (query) {
-            // Předvyplnění vyhledávacího pole
-            vstupHledani.value = query;
-            vytvorTlacitkoZobrazitVsechny();  // Zobrazení tlačítka pro resetování filtru
         }
     });
 </script>

@@ -178,7 +178,7 @@ public class PojistenecController {
     @GetMapping("/pojistenecDetail/{id}")
     public String zobrazDetailPojistence(@PathVariable Long id, Model model) {
         Pojistenec pojistenec = service.dejPojistencePodleId(id);  // Získání pojištěnce podle ID
-        model.addAttribute("pojisteni", pojisteniService.getAllPojisteniForPojistenec(id));
+        model.addAttribute("pojisteni", pojisteniService.dejVsechnaPojisteniProPojistence(id));
         model.addAttribute("pojistenec", pojistenec);  // Předání pojištěnce do modelu pro zobrazení
         return "pojistenecDetail";  // Návrat šablony pro detail pojištěnce
     }

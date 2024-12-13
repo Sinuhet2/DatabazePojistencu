@@ -39,25 +39,43 @@ public class PojistenecService {
     // Zobrazí všechny pojištěnce s podporou stránkování
     public Page<Pojistenec> zobrazVsechnyPojistence(Pageable pageable) {
         return repository.findAll(pageable); // Používá vestavěnou metodu z JpaRepository
-    }
+
+
+
+}
 
     // Hledá pojištěnce podle jména a příjmení
     public List<Pojistenec> hledejPojistence(String query) {
+
         String[] queryParts = query.split("\\s+");
         String jmenoQuery = queryParts.length > 0 ? queryParts[0] : "";
         String prijmeniQuery = queryParts.length > 1 ? queryParts[1] : "";
+
+        if (queryParts.length == 1) {
+            return repository.findByJmenoStartingWithOrPrijmenniStartingWith(query, query);
+        }
 
         return repository.findByJmenoStartingWithAndPrijmenniStartingWith(jmenoQuery, prijmeniQuery);
     }
 
+
+
     // Vyhledání pojištěnců na základě jména a příjmení s podporou stránkování
     public Page<Pojistenec> najdiPojistence(String query, Pageable pageable) {
+
         String[] queryParts = query.split("\\s+");
         String jmenoQuery = queryParts.length > 0 ? queryParts[0] : "";
         String prijmeniQuery = queryParts.length > 1 ? queryParts[1] : "";
 
+        if (queryParts.length == 1) {
+            return repository.findByJmenoStartingWithOrPrijmenniStartingWith(query, query, pageable);
+        }
+
         return repository.findByJmenoStartingWithAndPrijmenniStartingWith(jmenoQuery, prijmeniQuery, pageable);
     }
+
+
+
 
     // Vrací pojištěnce podle jeho ID
     public Pojistenec dejPojistencePodleId(Long id) {

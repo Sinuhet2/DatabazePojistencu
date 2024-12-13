@@ -26,7 +26,7 @@
             </div>
 
             <!-- Tabulka pro zobrazení pojištěnců (na začátku je skrytá) -->
-            <table id="tabulkaPojistencu" class="table border table-striped mt-4" style="display: none;">
+            <table id="tabulkaPojistencu" class="table border table-responsive table-striped mt-4" style="display: none;">
                 <thead>
                 <tr>
                     <th>Jméno a Příjmení</th>
@@ -97,26 +97,33 @@
         // Logika pro vyhledávání pojištěnců (klientská část)
         document.getElementById('tlacitkoHledani').addEventListener('click', function() {
             const query = document.getElementById('radekProHledani').value.trim();
+            console.log("Zadaný text:", query);
+
 
             if (!query) {
                 alert('Prosím zadejte nějaký text pro hledání.');
-                return; // Pokud je dotaz prázdný, hledání se zastaví
+                return; // Pokud není zadán dotaz, neprovádíme hledání
             }
 
-            // Zobrazení indikátoru načítání (pokud je potřeba)
-            const teloTabulky = document.getElementById('seznamPojistencu');
-            teloTabulky.innerHTML = '<tr><td colspan="4" class="text-center">Hledám...</td></tr>';  // Dočasná zpráva
+            // Skrytí tabulky před zobrazením výsledků
+            document.getElementById('tabulkaPojistencu').style.display = 'none';
 
-            // Fetch vyhledávacích výsledků z backendu
+            // Zobrazení indikátoru načítání
+            const teloTabulky = document.getElementById('seznamPojistencu');
+            teloTabulky.innerHTML = '<tr><td colspan="3" class="text-center">Hledám...</td></tr>';  // Dočasná zpráva
+
+            // Vyhledání pojištěnců
             fetch(`/pojistenec/seznamPojistencu/search?query=${query}`)
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Výsledky hledání:', data);  // Pro ladění
                     teloTabulky.innerHTML = ''; // Vymazání předchozího obsahu
 
                     if (Array.isArray(data) && data.length > 0) {
-                        // Zobrazení tabulky a tlačítka pro skrytí/zobrazení
-                        document.getElementById('tabulkaPojistencu').style.display = 'block';
+                        // Pokud byly nalezeny pojištěnci
+                        document.getElementById('tabulkaPojistencu').style.display = 'table';
                         document.getElementById('kontejnerProTlacitkoZobrazeni').style.display = 'block';
+
 
                         data.forEach(pojistenec => {
                             const radek = document.createElement('tr');
@@ -141,7 +148,7 @@
                             const url = `/pojistenec/upravitPojistence/${pojistenec.id}`;
 
                             tlacitkoUpravit.onclick = function() {
-                                window.location.href = url;  // Přejít na stránku pro úpravu
+                                window.location.href = url;
                             };
 
                             bunkaAkci.appendChild(tlacitkoUpravit);
@@ -161,14 +168,25 @@
                             teloTabulky.appendChild(radek);
                         });
                     } else {
-                        teloTabulky.innerHTML = `<tr><td colspan="4" class="text-center">Žádní pojištěnci nenalezeni.</td></tr>`;
+                        // Pokud nejsou žádní pojištěnci, přidáme řádek s hláškou
+                        const radekNenalezeno = document.createElement('tr');
+                        const bunkaNenalezeno = document.createElement('td');
+                        bunkaNenalezeno.colSpan = 3;  // Zajistíme, že zpráva pokryje všechny sloupce
+                        bunkaNenalezeno.className = 'text-center text-danger';
+                        bunkaNenalezeno.innerText = 'Žádní pojištěnci nenalezeni.';
+                        radekNenalezeno.appendChild(bunkaNenalezeno);
+                        teloTabulky.appendChild(radekNenalezeno);
                         document.getElementById('kontejnerProTlacitkoZobrazeni').style.display = 'none';
+
                     }
+
+                    // Ujistíme se, že tabulka je viditelná
+                    document.getElementById('tabulkaPojistencu').style.display = 'table';
                 })
                 .catch(error => {
                     console.error('Chyba při vyhledávání:', error);
-                    teloTabulky.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Chyba při načítání seznamu pojištěnců.</td></tr>';
-                    document.getElementById('kontejnerProTlacitkoZobrazeni').style.display = 'none';
+                    teloTabulky.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Chyba při načítání seznamu pojištěnců.</td></tr>';
+                    document.getElementById('tabulkaPojistencu').style.display = 'table'; // Zajistíme, že tabulka bude viditelná i při chybě
                 });
         });
 
@@ -176,7 +194,7 @@
         document.getElementById('tlacitkoZobrazeni').addEventListener('click', function() {
             const tabulka = document.getElementById('tabulkaPojistencu');
             const jeViditelna = tabulka.style.display !== 'none';
-            tabulka.style.display = jeViditelna ? 'none' : 'block';
+            tabulka.style.display = jeViditelna ? 'none' : 'table';
             this.innerText = jeViditelna ? 'Zobrazit seznam pojištěnců' : 'Skrýt seznam pojištěnců';
         });
     });

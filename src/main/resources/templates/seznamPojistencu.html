@@ -26,10 +26,6 @@
                 <button class="btn btn-secondary mt-2 text-nowrap" id="tlacitkoHledat">Hledat pojištěnce</button>
             </div>
 
-            <div th:if="${#lists.isEmpty(pojistenci)}" class="alert alert-info">
-                V databázi zatím nejsou žádní pojištěnci.
-            </div>
-
             <!-- Tabulka pro zobrazení pojištěnců -->
             <table id="tabulkaPojistencu" class="table border table-striped mt-4">
                 <thead>
@@ -73,7 +69,7 @@
             </table>
 
             <!-- Navigace pro stránkování -->
-            <nav id="strankovani" aria-label="Page navigation">
+            <nav id="strankovani" aria-label="Page navigation" th:if="${celkemStran > 0}">
                 <ul class="pagination justify-content-center">
                     <!-- Tlačítko pro předchozí stránku, zobrazuje se pouze pokud nejsme na první stránce -->
                     <li class="page-item" th:if="${soucasnaStrana > 1}">
@@ -117,49 +113,50 @@
         window.location.href = '/pojistenec/seznamPojistencu?page=1&query=' + encodeURIComponent(query);
     });
 
-    // Funkce pro filtrování seznamu pojištěnců podle hledaného výrazu
-    function filterPojistenciList(searchValue) {
-        const hledatVyraz = searchValue.trim().toLowerCase();
-        const rady = document.querySelectorAll('#seznamPojistencu tr');
-        let found = false;
+function filterPojistenciList(hledanaHodnota) {
+    const hledanyVyraz = hledanaHodnota.trim().toLowerCase();
+    const teloTabulky = document.querySelector('#seznamPojistencu');
+    const rady = teloTabulky.querySelectorAll('tr');
+    let found = false;
 
-        rady.forEach(function(row) {
-            const bunkaJmena = row.querySelector('td:nth-child(1)'); // První buňka řádku (Jméno)
-
-            if (bunkaJmena) {
-                const zakotveni = bunkaJmena.querySelector('a'); // Ověření, zda existuje tag <a>
-
-                if (zakotveni) {
-                    const textJmena = zakotveni.textContent.trim().toLowerCase(); // Získání textu jména
-                    if (textJmena.startsWith(hledatVyraz)) {
-                        row.style.display = ''; // Zobrazení řádku, pokud odpovídá hledanému výrazu
-                        found = true;
-                    } else {
-                        row.style.display = 'none'; // Skrytí řádku, pokud neodpovídá
-                    }
-                } else {
-                    row.style.display = 'none'; // Skrytí řádku, pokud není tag <a>
-                }
+    // Skrýt všechny řádky, které neodpovídají hledanému výrazu
+    rady.forEach(row => {
+        const bunkaJmena = row.querySelector('td:nth-child(1)');
+        if (bunkaJmena) {
+            const textJmena = bunkaJmena.textContent.trim().toLowerCase();
+            if (textJmena.includes(hledanyVyraz)) {
+                row.style.display = ''; // Zobrazíme odpovídající řádky
+                found = true;
             } else {
-                row.style.display = 'none'; // Skrytí řádku, pokud první <td> chybí
-            }
-        });
-
-        // Zobrazení zprávy, pokud nejsou nalezeny žádné výsledky
-        const zpravaOZadnychVysledcich = document.querySelector('#zpravaOZadnychVysledcich');
-        if (found) {
-            // Skrytí zprávy "Žádní pojištěnci nenalezeni", pokud jsou výsledky
-            if (zpravaOZadnychVysledcich) zpravaOZadnychVysledcich.style.display = 'none';
-        } else {
-            // Zobrazení zprávy "Žádní pojištěnci nenalezeni", pokud žádní pojištěnci odpovídají hledání
-            if (!zpravaOZadnychVysledcich) {
-                const radekZpravy = document.createElement('tr');
-                radekZpravy.id = 'zpravaOZadnychVysledcich';  // Přiřazení ID pro snadnější nalezení později
-                radekZpravy.innerHTML = `<td colspan="3" class="text-center">Žádní pojištěnci nenalezeni.</td>`;
-                document.querySelector('#seznamPojistencu').appendChild(radekZpravy);
+                row.style.display = 'none'; // Skryjeme neodpovídající řádky
             }
         }
+    });
+
+    // Správa chybové hlášky
+    let chybovaHlaseni = document.querySelector('#radekNenalezeno');
+    if (!found) {
+        if (!chybovaHlaseni) {
+            // Pokud neexistuje, vytvoříme nový řádek pro chybovou hlášku
+            chybovaHlaseni = document.createElement('tr');
+            chybovaHlaseni.id = 'radekNenalezeno';
+            chybovaHlaseni.innerHTML = `
+                <td colspan="3" class="text-center text-danger">
+                    Žádní pojištěnci nenalezeni.
+                </td>`;
+            teloTabulky.appendChild(chybovaHlaseni);
+        }
+    } else if (chybovaHlaseni) {
+        // Pokud je nalezen záznam, odstraníme řádek s chybovou hláškou
+        chybovaHlaseni.remove();
     }
+}
+
+// Zavolání funkce pro filtrování pojištěnců po načtení stránky
+document.addEventListener('DOMContentLoaded', function() {
+    filterPojistenciList(''); // Zavoláme pro zobrazení všech pojištěnců
+});
+
 
     // Funkce pro vytvoření tlačítka pro zobrazení všech pojištěnců
     function vytvorTlacitkoZobrazitVsechny() {

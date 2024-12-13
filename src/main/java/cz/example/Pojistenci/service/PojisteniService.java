@@ -35,18 +35,27 @@ public class PojisteniService {
     }
 
     // Zobrazí stránku všech pojištění
-    public Page<Pojisteni> dejStranu(Pageable pageable) {
+    public Page<Pojisteni> dejVsechnaPojisteni(Pageable pageable) {
         return pojisteniRepository.findAll(pageable);  // Používá vestavěnou metodu z JpaRepository
     }
 
     // Vyhledá pojištění podle jména pojištěnce (s podporou stránkování)
-    public Page<Pojisteni> najdiStranu(String query, Pageable pageable) {
+    public Page<Pojisteni> najdiPojisteniPodleJmenaPojistence(String query, Pageable pageable) {
+        String[] queryParts = query.split("\\s+");
+        String jmenoQuery = queryParts.length > 0 ? queryParts[0] : "";
+        String prijmeniQuery = queryParts.length > 1 ? queryParts[1] : "";
+
+        if (queryParts.length == 1) {
+            return pojisteniRepository.findByPojistenecJmenoOrPrijmenniStartingWithIgnoreCase(query, pageable);
+
+        }
+
         // Předpokládá se, že máte metodu v repository pro hledání podle jména pojištěnce
-        return pojisteniRepository.findByPojistenecNameContaining(query, pageable);
+        return pojisteniRepository.findByPojistenecJmenoPrijmenniStartingWithIgnoreCase(query, pageable);
     }
 
     // Získá všechna pojištění pro konkrétního pojištěnce podle jeho ID
-    public List<Pojisteni> getAllPojisteniForPojistenec(Long id) {
+    public List<Pojisteni> dejVsechnaPojisteniProPojistence(Long id) {
         return pojisteniRepository.findByPojistenecId(id);
     }
 
